@@ -22,5 +22,4 @@ jobs:
     - name: git ㅓ장소 소스 복사후의 hello 폴더 구조    # 리눅스 셀 명령어 2줄 이상
       run: |
 	ls -la
-	ls -la hello
 
