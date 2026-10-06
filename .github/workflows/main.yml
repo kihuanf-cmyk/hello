@@ -22,14 +22,12 @@ jobs:
     - name: git 저장소 소스 복사후의 hello 폴더 구조    # 리눅스 셀 명령어 2줄 이상
       run: |
         ls -la
-<<<<<<< HEAD
 
     - name: 보안환경변수를 이용하여 개인키 파일 생성
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-
 
     - name: actions를 사용하여 보안환경변수를 이용하여 개인키 파일 생성
       uses: webfactory/ssh-agent@v0.5.3
@@ -42,10 +40,7 @@ jobs:
     - name: 운영서버에 배포 진행
       run: scp target/hello-1.0.0.war ubuntu@43.200.191.12:~/ROOT.war
 
-
- #   - name: 개인키파일확인
- #    run: 
- #      cat ~/.ssh/id_rsa
- #       cat ~/.ssg/known_hosts
-=======
->>>>>>> branch 'main' of https://github.com/kihuanf-cmyk/hello.git
+#    - name: 개인키파일확인
+#      run: |
+#        cat ~/.ssh/id_rsa
+#        cat ~/.ssh/known_hosts
