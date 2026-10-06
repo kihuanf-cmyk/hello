@@ -23,3 +23,22 @@ jobs:
        run: |
         ls -la
 
+    - name: 보안환경변수를 이용하여 개인키 파일 생성
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+
+
+    - name: actions를 사용하여 보안환경변수를 이용하여 개인키 파일 생성
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+    - name: 서버연결시 지문등록
+      run: ssh-keyscan -t ed25519 43.200.191.12 >> ~/.ssh/known_hosts/
+
+    - name: 개인키파일확인
+      run: 
+        cat ~/.ssh/id_rsa
+        cat ~/.ssg/known_hosts
