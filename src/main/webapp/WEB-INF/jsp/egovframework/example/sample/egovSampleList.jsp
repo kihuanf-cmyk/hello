@@ -60,9 +60,10 @@
 <body style="text-align:center; margin:0 auto; display:inline; padding-top:100px;">
     <form:form modelAttribute="searchVO" id="listForm" name="listForm" method="post">
         <input type="hidden" name="selectedId" />
+        새롭게 수정된 목록
         <div id="content_pop">
         	<!-- 타이틀 -->
-        	<div id="목록화면수정">
+        	<div id="title">
         		<ul>
         			<li><img src="<c:url value='/images/egovframework/example/title_dot.gif'/>" alt=""/><spring:message code="list.sample" /></li>
         		</ul>
