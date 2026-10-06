@@ -36,9 +36,13 @@ jobs:
         ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
     - name: 서버연결시 지문등록
-      run: ssh-keyscan -t ed25519 43.200.191.12 >> ~/.ssh/known_hosts/
+      run: ssh-keyscan -t ed25519 43.200.191.12 >> ~/.ssh/known_hosts
 
-    - name: 개인키파일확인
-      run: 
-        cat ~/.ssh/id_rsa
-        cat ~/.ssg/known_hosts
+    - name: 운영서버에 배포 진행
+      run: scp target/hello-1.0.0.war ubuntu@43.200.191.12:~/ROOT.war
+
+
+ #   - name: 개인키파일확인
+ #    run: 
+ #      cat ~/.ssh/id_rsa
+ #       cat ~/.ssg/known_hosts
