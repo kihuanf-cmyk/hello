@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest  # 어떤 운영체제 버전에서 실행하는지 설정 cancel-timeout-minutes: cancel-timeout-minutes: 
+    runs-on: ubuntu-latest  # 어떤 운영체제 버전에서 실행하는지 설정
 
     steps:
     - name: git 저장소 소스 복사전의 폴더 구조
@@ -26,6 +26,18 @@ jobs:
     - name: 메이븐 빌드
       run: mvn clean package
 
+    # [추가] 러너(가상머신)에서 Docker Hub 로그인 (비밀번호 대신 토큰 사용)
+    - name: Docker Hub 로그인
+      run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+    # [추가] Dockerfile로 이미지 빌드 (target/hello-1.0.0.war 가 이미지 안에 들어감)
+    - name: 도커 이미지 빌드
+      run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/hello-app:latest .
+
+    # [추가] 만든 이미지를 Docker Hub(private)에 업로드
+    - name: 도커 이미지 푸시
+      run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/hello-app:latest
+
     - name: 보안환경변수를 이용하여 개인키 파일생성
       run: |
         mkdir -p ~/.ssh
@@ -38,16 +50,31 @@ jobs:
         ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
         
     - name: 서버연결시 지문등록
-      run: ssh-keyscan -t ed25519 3.34.197.124 >> ~/.ssh/known_hosts
+      # [변경] IP 직접 입력 -> EC2_HOST Secret 사용 (IP가 바뀌면 Secret 한 곳만 수정)
+      run: ssh-keyscan -t ed25519 ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
        
 #    - name: 개인키파일확인 
 #      run: |
 #        cat ~/.ssh/id_rsa
 #        cat ~/.ssh/known_hosts
  
+    # [변경] scp/cp 방식 삭제 -> EC2에서 이미지를 받아 컨테이너로 교체 실행
     - name: 운영서버에 배포 진행 
       run: |
-        scp target/hello-1.0.0.war ubuntu@3.34.197.124:~/ROOT.war
-        ssh -i ~/.ssh/id_rsa ubuntu@3.34.197.124 << 'EOF'
-          cp ~/ROOT.war /opt/tomcat/webapps/
+        ssh -i ~/.ssh/id_rsa ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+          # EC2에서도 Docker Hub 로그인 (private 저장소라서 필요)
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+          # 새 이미지를 먼저 받아두면 기존 사이트가 끊기는 시간이 짧아짐
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/hello-app:latest
+
+          # 기존 컨테이너 정지/삭제 (처음이라 없어도 에러로 멈추지 않게 || true)
+          docker stop hello || true
+          docker rm hello || true
+
+          # 4번에서 성공한 방식 그대로 실행 (host 네트워크 + 재부팅 시 자동 시작)
+          docker run -d --name hello --network host --restart unless-stopped ${{ secrets.DOCKERHUB_USERNAME }}/hello-app:latest
+
+          # 교체된 이전 이미지 정리 (디스크 용량 절약)
+          docker image prune -f
         EOF
